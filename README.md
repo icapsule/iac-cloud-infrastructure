@@ -189,13 +189,27 @@ terraform apply
 
 ---
 
-## 🗺 Roadmap (Future Enhancements)
+## 🗺️ Advanced IaC Evolution Roadmap
 
-*   [ ] **OIDC Dynamic Credentials**: Upgrade the current GitHub-to-HCP authentication (`TF_API_TOKEN`) to a Keyless OpenID Connect (OIDC) architecture, achieving true Zero-Trust dynamic trust without storing static API tokens in GitHub Secrets.
-*   [ ] **Cross-Cloud State Data Sources**: Utilize `terraform_remote_state` to dynamically pass output variables (e.g., OCI IP addresses) directly into the Cloudflare Edge stack.
-*   [ ] **Automated Drift Detection**: Schedule a nightly cron job in GitHub Actions to run `terraform plan` and alert on any out-of-band changes to infrastructure.
+This roadmap outlines the systematic evolution of our IaC repository from a functional baseline to an industrial-grade, enterprise-ready infrastructure platform.
 
+### 🚀 Phase 1: Architecture & GitOps Hardening (Execution in Progress)
+*   [ ] **Monorepo Native Execution**: Transition from rigid Git URLs to dynamic local paths using `terraform -chdir` in CI, enabling seamless intra-repo module dependencies.
+*   [ ] **Dependency-Aware CI Pipelines**: Refactor GitHub Actions path filters to ensure changes in shared `modules/` instantly trigger impact analyses (Terraform Plan) on all dependent `stacks/`.
+*   [ ] **Defensive Module Contracts**: Implement rigorous `validation` blocks within `variables.tf` (e.g., regex constraints for resource naming, allowed VM shapes) to enforce "Fail Fast" principles at the code level.
 
+### 🛡️ Phase 2: DevSecOps & FinOps Integration (Next Steps)
+*   [ ] **Infrastructure Drift Detection**: Implement scheduled GitHub Actions (Cron) to run state-diff checks, proactively alerting on manual console changes (Out-of-band drifts).
+*   [ ] **Shift-Left Security Scanning**: Integrate `tfsec` or `Checkov` into the PR pipeline to block insecure configurations (e.g., exposed ports, unencrypted volumes) prior to deployment.
+*   [ ] **Automated FinOps (Infracost)**: Embed `Infracost` into PR bot comments to provide real-time, transparent cloud cost deltas for every infrastructure modification.
+*   [ ] **Dynamic Workspace Routing**: Eliminate hardcoded environments by mapping Git branches (`main`, `dev`) dynamically to distinct HCP Terraform Workspaces.
 
+---
 
+### 🌌 Phase 3: Enterprise Architecture Horizons (Conceptual Blueprint)
+> **Note:** The following patterns represent the pinnacle of enterprise platform engineering. While fully understood and architected in theory, their physical implementation is intentionally deferred in this project to adhere to pragmatic ROI and YAGNI (You Aren't Gonna Need It) principles.
 
+*   [ ] **OIDC & Workload Identity Federation**: Eliminating long-lived static API tokens (GitHub Secrets) in favor of short-lived, dynamically exchanged OIDC tokens between GitHub Actions and Cloud Providers for zero-trust security.
+*   [ ] **Private Terraform Module Registry**: Versioning and distributing modules via Semantic Versioning (SemVer) through a Private Registry (e.g., HCP Registry) rather than source-level consumption.
+*   [ ] **End-to-End Infrastructure Testing (Terratest)**: Utilizing Go-based testing frameworks to provision, validate, and teardown ephemeral infrastructure during the CI phase (Test-Driven IaC).
+*   [ ] **Dynamic Policy-as-Code (Sentinel/OPA)**: Enforcing platform-level governance rules (e.g., mandatory CostCenter tags, region restrictions) as executable code that intercepts and overrides plans at the HCP Terraform runtime.
