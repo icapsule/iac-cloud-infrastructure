@@ -186,3 +186,11 @@ terraform apply
 | **OCI Regional Outage** | Cloudflare automatically fails over origin traffic to secondary node | < 30 seconds |
 | **Accidental VM Deletion** | Re-run `terraform apply` in `stacks/oci-stockholm` | < 3 minutes |
 | **Database Corruption** | Point-in-time recovery via Neon + snapshot sync from AWS S3 | < 15 minutes |
+
+---
+
+## 🗺 Roadmap (Future Enhancements)
+
+*   [ ] **OIDC Dynamic Credentials**: Upgrade the current GitHub-to-HCP authentication (`TF_API_TOKEN`) to a Keyless OpenID Connect (OIDC) architecture, achieving true Zero-Trust dynamic trust without storing static API tokens in GitHub Secrets.
+*   [ ] **Cross-Cloud State Data Sources**: Utilize `terraform_remote_state` to dynamically pass output variables (e.g., OCI IP addresses) directly into the Cloudflare Edge stack.
+*   [ ] **Automated Drift Detection**: Schedule a nightly cron job in GitHub Actions to run `terraform plan` and alert on any out-of-band changes to infrastructure.

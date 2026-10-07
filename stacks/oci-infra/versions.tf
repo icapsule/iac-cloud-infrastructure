@@ -8,15 +8,16 @@ terraform {
     }
   }
 
-  # Terraform Cloud Workspace: iac-oci-stockholm
-  # cloud {
-  #   organization = "your-org-name"
-  #   workspaces {
-  #     name = "iac-oci-infra"
-  #   }
-  # }
+  # Terraform Cloud Workspace: iac-oci-infra
+  cloud {
+    organization = "VLTA"
+    workspaces {
+      name = "iac-oci-infra"
+    }
+  }
 }
 
 provider "oci" {
-  config_file_profile = "DEFAULT"
+  # 本地运行时会自动寻找 ~/.oci/config 的 DEFAULT profile
+  # 在远端（HCP 或 GitHub）运行时，会自动读取 OCI_TENANCY 等环境变量
 }
