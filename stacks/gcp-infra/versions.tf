@@ -12,7 +12,7 @@ terraform {
   # cloud {
   #   organization = "your-org-name"
   #   workspaces {
-  #     name = "iac-gcp-europe-north"
+  #     name = "iac-gcp-infra"
   #   }
   # }
 }

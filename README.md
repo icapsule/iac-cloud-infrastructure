@@ -22,21 +22,21 @@ flowchart TD
         CF["Cloudflare Anycast Network & WAF<br/><code>stacks/global-edge</code>"]
     end
 
-    subgraph OCI["2. Primary Compute Cluster (Oracle Cloud - Stockholm)"]
+    subgraph OCI["2. Primary Compute Cluster (Oracle Cloud Infrastructure)"]
         direction TB
-        VCN["Virtual Cloud Network (VCN)<br/><code>stacks/oci-stockholm</code>"]
+        VCN["Virtual Cloud Network (VCN)<br/><code>stacks/oci-infra</code>"]
         VM1["<b>VM1: AI Gateway Core</b><br/>IP: 79.76.48.169<br/>Docker Compose: LiteLLM"]
         VM2["<b>VM2: Omniroute Failover</b><br/>IP: 129.151.210.179<br/>Docker Compose: Omniroute"]
         VCN --- VM1
         VCN --- VM2
     end
 
-    subgraph AWS["3. Disaster Recovery & Snapshot Store (AWS - Frankfurt)"]
-        S3["<b>S3 Bucket (AES256 Versioned)</b><br/><code>stacks/aws-frankfurt</code><br/>Cross-Cloud Backup Replicas"]
+    subgraph AWS["3. Disaster Recovery & Snapshot Store (Amazon Web Services)"]
+        S3["<b>S3 Bucket (AES256 Versioned)</b><br/><code>stacks/aws-infra</code><br/>Cross-Cloud Backup Replicas"]
     end
 
-    subgraph GCP["4. Telemetry & Cold Archive (Google Cloud - Europe-North)"]
-        GCS["<b>GCS Nearline Bucket</b><br/><code>stacks/gcp-europe-north</code><br/>Long-term Audit & Log Retention"]
+    subgraph GCP["4. Telemetry & Cold Archive (Google Cloud Platform)"]
+        GCS["<b>GCS Nearline Bucket</b><br/><code>stacks/gcp-infra</code><br/>Long-term Audit & Log Retention"]
     end
 
     subgraph DataTier["External Serverless Data Tier"]
@@ -56,7 +56,7 @@ flowchart TD
 ## 📐 Architecture Design Principles
 
 ### 1. 🛡️ Blast Radius Isolation (爆炸半径物理隔离)
-Instead of a monolithic `main.tf` binding all cloud providers into a single state file, this repository strictly separates state boundaries by **Cloud Provider and Region**:
+Instead of a monolithic `main.tf` binding all cloud providers into a single state file, this repository strictly separates state boundaries by **Cloud Provider**:
 * Modifying OCI compute firewall will **never** trigger resource locks or risk regressions against AWS or GCP states.
 * An outage in one cloud provider's API endpoint does not block continuous deployment pipelines across the other providers.
 
@@ -93,19 +93,19 @@ iac-cloud-infrastructure/
     │   ├── variables.tf
     │   └── outputs.tf
     │
-    ├── oci-stockholm/              # OCI Primary & Secondary Compute Nodes
+    ├── oci-infra/                  # OCI Primary & Secondary Compute Nodes
     │   ├── versions.tf             # Native import blocks for Brownfield assets
     │   ├── main.tf
     │   ├── variables.tf
     │   └── outputs.tf
     │
-    ├── aws-frankfurt/              # AWS Cross-Cloud DR & S3 Backup Storage
+    ├── aws-infra/                  # AWS Cross-Cloud DR & S3 Backup Storage
     │   ├── versions.tf
     │   ├── main.tf
     │   ├── variables.tf
     │   └── outputs.tf
     │
-    └── gcp-europe-north/           # GCP Telemetry Archive & Nearline Storage
+    └── gcp-infra/                  # GCP Telemetry Archive & Nearline Storage
         ├── versions.tf
         ├── main.tf
         ├── variables.tf
@@ -120,7 +120,7 @@ Each stack operates independently. Navigate into the target stack directory:
 
 ### Step 1: Manage OCI Compute Stack
 ```bash
-cd stacks/oci-stockholm
+cd stacks/oci-infra
 
 # Initialize provider plugins (OCI >= 6.0)
 terraform init
@@ -142,7 +142,15 @@ terraform apply
 
 ### Step 3: Manage AWS DR Store
 ```bash
-cd stacks/aws-frankfurt
+cd stacks/aws-infra
+terraform init
+terraform plan
+terraform apply
+```
+
+### Step 4: Manage GCP Archive
+```bash
+cd stacks/gcp-infra
 terraform init
 terraform plan
 terraform apply
