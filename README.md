@@ -1,96 +1,160 @@
-# 🌐 Multi-Cloud Infrastructure as Code (IaC) & GitOps Foundations
+# 🌐 Enterprise Multi-Cloud Infrastructure as Code (IaC)
 
 ![Terraform](https://img.shields.io/badge/Terraform-1.5%2B-844FBA?logo=terraform&logoColor=white)
-![Oracle Cloud](https://img.shields.io/badge/OCI-Compute%20%26%20VCN-F80000?logo=oracle&logoColor=white)
-![GitOps](https://img.shields.io/badge/Workflow-GitOps%20%2F%20VCS--Driven-2088FF?logo=github-actions&logoColor=white)
-![Architecture](https://img.shields.io/badge/Architecture-High%20Availability%20Active--Passive-success)
-![Security](https://img.shields.io/badge/Secrets-Zero%20Exposure%20(Air--Gapped)-brightgreen)
+![Multi-Cloud](https://img.shields.io/badge/Topology-Multi--Cloud%20(OCI%20%2B%20AWS%20%2B%20GCP)-blue)
+![Edge](https://img.shields.io/badge/Edge-Cloudflare%20Anycast-F38020?logo=cloudflare&logoColor=white)
+![GitOps](https://img.shields.io/badge/Delivery-GitOps%20%2F%20VCS--Driven-2088FF?logo=github-actions&logoColor=white)
+![Security](https://img.shields.io/badge/State-Blast%20Radius%20Isolated-success)
 
 > **Repository**: `iac-cloud-infrastructure`  
-> **Purpose**: Production-grade Infrastructure as Code (IaC) managing resilient multi-cloud compute nodes, network topologies, and automated edge failovers via declarative HCL and GitOps workflows.
+> **Architecture Pattern**: Layered & Modular Multi-Cloud Topology with State Boundary Isolation  
+> **Managed Footprint**: Oracle Cloud (Stockholm), AWS (Frankfurt), Google Cloud (Hamina), Cloudflare Global Edge.
 
 ---
 
-## 🏛 System Architecture
+## 🏛 Multi-Cloud Architecture Topology
 
-This repository declaratively manages an **Active-Passive / Multi-Node High Availability Architecture** running on Oracle Cloud Infrastructure (Stockholm Region `eu-stockholm-1`) behind Cloudflare edge routing:
+This repository orchestrates a production-grade, multi-cloud foundation designed for **zero single-point-of-failure (SPOF)**, cross-cloud disaster recovery, and edge-routed low latency:
 
 ```mermaid
 flowchart TD
-    subgraph Edge["Global Edge Routing & Security (Cloudflare)"]
-        CF["Cloudflare Anycast Network & WAF"]
+    subgraph Edge["1. Global Edge Routing (Cloudflare)"]
+        CF["Cloudflare Anycast Network & WAF<br/><code>stacks/global-edge</code>"]
     end
 
-    subgraph OCI["Oracle Cloud Infrastructure (Region: eu-stockholm-1)"]
+    subgraph OCI["2. Primary Compute Cluster (Oracle Cloud - Stockholm)"]
         direction TB
-        subgraph VCN["Virtual Cloud Network (VCN) / Subnet"]
-            VM1["<b>VM1: AI Gateway Node</b><br/>IP: 79.76.48.169<br/>1 OCPU / 1GB RAM<br/>Docker: LiteLLM Core"]
-            VM2["<b>VM2: Omniroute Failover Node</b><br/>IP: 129.151.210.179<br/>1 OCPU / 1GB RAM<br/>Docker: Omniroute + LiteLLM"]
-        end
+        VCN["Virtual Cloud Network (VCN)<br/><code>stacks/oci-stockholm</code>"]
+        VM1["<b>VM1: AI Gateway Core</b><br/>IP: 79.76.48.169<br/>Docker Compose: LiteLLM"]
+        VM2["<b>VM2: Omniroute Failover</b><br/>IP: 129.151.210.179<br/>Docker Compose: Omniroute"]
+        VCN --- VM1
+        VCN --- VM2
     end
 
-    subgraph DataTier["Serverless Persistence Tier"]
+    subgraph AWS["3. Disaster Recovery & Snapshot Store (AWS - Frankfurt)"]
+        S3["<b>S3 Bucket (AES256 Versioned)</b><br/><code>stacks/aws-frankfurt</code><br/>Cross-Cloud Backup Replicas"]
+    end
+
+    subgraph GCP["4. Telemetry & Cold Archive (Google Cloud - Europe-North)"]
+        GCS["<b>GCS Nearline Bucket</b><br/><code>stacks/gcp-europe-north</code><br/>Long-term Audit & Log Retention"]
+    end
+
+    subgraph DataTier["External Serverless Data Tier"]
         DB[(Neon PostgreSQL Serverless)]
     end
 
     CF -->|Zero Trust Tunnel| VM1
-    CF -.->|Health-Check Failover| VM2
-    VM1 -->|SSL Pooled Connection| DB
-    VM2 -->|SSL Pooled Connection| DB
+    CF -.->|Health Check Failover| VM2
+    VM1 -->|Pooled SSL| DB
+    VM2 -->|Pooled SSL| DB
+    VM1 -.->|Nightly Encrypted Dumps| S3
+    VM1 -.->|Audit Telemetry| GCS
 ```
 
 ---
 
-## 🚀 Key Engineering Highlights
+## 📐 Architecture Design Principles
 
-1. **Declarative Brownfield Adoption (Terraform 1.5+ Native Imports)**:
-   - Uses native `import` blocks to manage pre-existing cloud assets into code state without downtime or destructive recreate cycles.
-2. **GitOps & Single Source of Truth**:
-   - All cloud modifications undergo Pull Request reviews (`terraform plan`) prior to automated promotion (`terraform apply`).
-3. **Stateless Compute & Right-Sized Architecture**:
-   - Compute instances operate strictly stateless; business state resides in external serverless storage, allowing instantaneous disaster recovery and teardown.
-4. **Air-Gapped Secrets & Zero Credential Exposure**:
-   - No private keys, sensitive passwords, or `.tfstate` files are tracked in Git. Sensitive inputs are injected dynamically via encrypted environment variables.
+### 1. 🛡️ Blast Radius Isolation (爆炸半径物理隔离)
+Instead of a monolithic `main.tf` binding all cloud providers into a single state file, this repository strictly separates state boundaries by **Cloud Provider and Region**:
+* Modifying OCI compute firewall will **never** trigger resource locks or risk regressions against AWS or GCP states.
+* An outage in one cloud provider's API endpoint does not block continuous deployment pipelines across the other providers.
+
+### 2. 🧱 Modular Reusability (DRY Infrastructure)
+* Shared infrastructure patterns (compute provisioning, DNS health routing) are abstracted under [`modules/`](file:///Users/icapsule/Developer/iac-cloud-infrastructure/modules/).
+* Environment/Stack root modules instantiate these reusable components with parameterized variables.
+
+### 3. 🔄 Stateless Compute & Cattle Architecture
+* OCI compute instances run containerized workloads (via Docker Compose) and store zero persistent business state locally.
+* Stateful databases reside in managed serverless PostgreSQL (Neon).
+* Compute nodes can be torn down and recreated in under 3 minutes via Terraform with zero data loss.
+
+### 4. 🔒 Zero-Trust Secrets Hygiene
+* Air-gapped secrets management: **Zero credentials, API tokens, or SSH private keys are checked into Git.**
+* All variables marked `sensitive = true` are injected at runtime via encrypted environment variables or Terraform Cloud workspace settings.
 
 ---
 
-## 📂 Project Structure
+## 📂 Repository Topology
 
 ```text
 iac-cloud-infrastructure/
-├── .gitignore         # Strict security ignore list (blocks *.key, *.tfstate, .env)
-├── README.md          # Project overview, architecture diagrams, and runbooks
-├── versions.tf        # Provider requirements (Terraform >= 1.5, OCI >= 6.0)
-├── variables.tf       # Parameterized infrastructure inputs (OCIDs, regions, shapes)
-├── main.tf            # Managed compute instances & native import blocks
-└── outputs.tf         # Declarative outputs (Public IPs, operational states)
+├── .gitignore                      # Comprehensive security ignore rules
+├── README.md                       # Architecture documentation & operational runbooks
+│
+├── modules/                        # 🧱 Reusable Infrastructure Modules
+│   ├── oci-compute-node/           # OCI Compute instance & tagging module
+│   └── cloudflare-dns-failover/    # Cloudflare multi-origin DNS routing module
+│
+└── stacks/                         # 🌐 Independent State Boundaries
+    ├── global-edge/                # Cloudflare DNS & Global Anycast Routing
+    │   ├── versions.tf
+    │   ├── main.tf
+    │   ├── variables.tf
+    │   └── outputs.tf
+    │
+    ├── oci-stockholm/              # OCI Primary & Secondary Compute Nodes
+    │   ├── versions.tf             # Native import blocks for Brownfield assets
+    │   ├── main.tf
+    │   ├── variables.tf
+    │   └── outputs.tf
+    │
+    ├── aws-frankfurt/              # AWS Cross-Cloud DR & S3 Backup Storage
+    │   ├── versions.tf
+    │   ├── main.tf
+    │   ├── variables.tf
+    │   └── outputs.tf
+    │
+    └── gcp-europe-north/           # GCP Telemetry Archive & Nearline Storage
+        ├── versions.tf
+        ├── main.tf
+        ├── variables.tf
+        └── outputs.tf
 ```
 
 ---
 
-## 🛠 Quickstart: Operational Runbook
+## 🛠 Operational Runbook: Deploying a Stack
 
-### 1. Prerequisites
-- [Terraform CLI](https://developer.hashicorp.com/terraform/install) `>= 1.5.0`
-- OCI Account API Signing Key and User OCID
+Each stack operates independently. Navigate into the target stack directory:
 
-### 2. Initialization & Plan
+### Step 1: Manage OCI Compute Stack
 ```bash
-# Initialize providers and remote state
+cd stacks/oci-stockholm
+
+# Initialize provider plugins (OCI >= 6.0)
 terraform init
 
-# Run pre-flight inspection and review planned diffs
+# Review execution plan (verifies native import blocks against live instances)
 terraform plan
+
+# Apply declarative configuration
+terraform apply
 ```
 
-### 3. Apply Configuration
+### Step 2: Manage Global Edge DNS
 ```bash
-# Deploy declarative changes to the cloud
+cd stacks/global-edge
+terraform init
+terraform plan
+terraform apply
+```
+
+### Step 3: Manage AWS DR Store
+```bash
+cd stacks/aws-frankfurt
+terraform init
+terraform plan
 terraform apply
 ```
 
 ---
 
-## 🛡 Security & Compliance
-- **Zero Hardcoded Secrets**: Protected by pre-commit hygiene and air-gapped secret management.
-- **State Management**: Remote encrypted state backend with atomic state locking to prevent concurrent mutations.
+## 📜 Compliance & Disaster Recovery Strategy
+
+| Scenario | Recovery Mechanism | Target RTO (Recovery Time Objective) |
+| :--- | :--- | :--- |
+| **OCI VM Crash / OOM** | Automated container restart via Docker Compose `restart: always` | < 10 seconds |
+| **OCI Regional Outage** | Cloudflare automatically fails over origin traffic to secondary node | < 30 seconds |
+| **Accidental VM Deletion** | Re-run `terraform apply` in `stacks/oci-stockholm` | < 3 minutes |
+| **Database Corruption** | Point-in-time recovery via Neon + snapshot sync from AWS S3 | < 15 minutes |

@@ -11,7 +11,7 @@ variable "compartment_ocid" {
 }
 
 variable "region" {
-  description = "OCI region for the deployment."
+  description = "OCI region for deployment."
   type        = string
   default     = "eu-stockholm-1"
 }

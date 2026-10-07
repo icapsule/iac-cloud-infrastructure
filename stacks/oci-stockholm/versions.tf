@@ -8,11 +8,11 @@ terraform {
     }
   }
 
-  # Uncomment and configure the cloud block when integrating with HCP Terraform / Terraform Cloud:
+  # Terraform Cloud Workspace: iac-oci-stockholm
   # cloud {
   #   organization = "your-org-name"
   #   workspaces {
-  #     name = "iac-cloud-infrastructure"
+  #     name = "iac-oci-stockholm"
   #   }
   # }
 }
