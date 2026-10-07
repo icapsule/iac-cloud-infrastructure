@@ -1,14 +1,15 @@
 # 🌐 Enterprise Multi-Cloud Infrastructure as Code (IaC)
 
 ![Terraform](https://img.shields.io/badge/Terraform-1.5%2B-844FBA?logo=terraform&logoColor=white)
-![Multi-Cloud](https://img.shields.io/badge/Topology-Multi--Cloud%20(OCI%20%2B%20AWS%20%2B%20GCP)-blue)
+![Multi-Cloud](https://img.shields.io/badge/Topology-Multi--Cloud%20(OCI%20%2B%20Azure%20%2B%20AWS%20%2B%20GCP)-blue)
+![Azure](https://img.shields.io/badge/Azure-Sweden%20Central-0078D4?logo=microsoft-azure&logoColor=white)
 ![Edge](https://img.shields.io/badge/Edge-Cloudflare%20Anycast-F38020?logo=cloudflare&logoColor=white)
 ![GitOps](https://img.shields.io/badge/Delivery-GitOps%20%2F%20VCS--Driven-2088FF?logo=github-actions&logoColor=white)
 ![Security](https://img.shields.io/badge/State-Blast%20Radius%20Isolated-success)
 
 > **Repository**: `iac-cloud-infrastructure`  
 > **Architecture Pattern**: Layered & Modular Multi-Cloud Topology with State Boundary Isolation  
-> **Managed Footprint**: Oracle Cloud (Stockholm), AWS (Frankfurt), Google Cloud (Hamina), Cloudflare Global Edge.
+> **Managed Footprint**: Oracle Cloud (Stockholm), Microsoft Azure (Sweden Central), Amazon Web Services, Google Cloud, Cloudflare Global Edge.
 
 ---
 
@@ -31,11 +32,15 @@ flowchart TD
         VCN --- VM2
     end
 
-    subgraph AWS["3. Disaster Recovery & Snapshot Store (Amazon Web Services)"]
+    subgraph AZ["3. Secrets & Enterprise Governance (Microsoft Azure - Sweden)"]
+        KV["<b>Azure Key Vault & Storage</b><br/><code>stacks/azure-infra</code><br/>Sweden Central (Zero Trust)"]
+    end
+
+    subgraph AWS["4. Disaster Recovery & Snapshot Store (Amazon Web Services)"]
         S3["<b>S3 Bucket (AES256 Versioned)</b><br/><code>stacks/aws-infra</code><br/>Cross-Cloud Backup Replicas"]
     end
 
-    subgraph GCP["4. Telemetry & Cold Archive (Google Cloud Platform)"]
+    subgraph GCP["5. Telemetry & Cold Archive (Google Cloud Platform)"]
         GCS["<b>GCS Nearline Bucket</b><br/><code>stacks/gcp-infra</code><br/>Long-term Audit & Log Retention"]
     end
 
@@ -47,6 +52,7 @@ flowchart TD
     CF -.->|Health Check Failover| VM2
     VM1 -->|Pooled SSL| DB
     VM2 -->|Pooled SSL| DB
+    VM1 -.->|Secrets & Identity| KV
     VM1 -.->|Nightly Encrypted Dumps| S3
     VM1 -.->|Audit Telemetry| GCS
 ```
@@ -99,6 +105,12 @@ iac-cloud-infrastructure/
     │   ├── variables.tf
     │   └── outputs.tf
     │
+    ├── azure-infra/                # Microsoft Azure Key Vault & Blob Store
+    │   ├── versions.tf
+    │   ├── main.tf
+    │   ├── variables.tf
+    │   └── outputs.tf
+    │
     ├── aws-infra/                  # AWS Cross-Cloud DR & S3 Backup Storage
     │   ├── versions.tf
     │   ├── main.tf
@@ -140,7 +152,15 @@ terraform plan
 terraform apply
 ```
 
-### Step 3: Manage AWS DR Store
+### Step 3: Manage Azure Enterprise Vault & Storage
+```bash
+cd stacks/azure-infra
+terraform init
+terraform plan
+terraform apply
+```
+
+### Step 4: Manage AWS DR Store
 ```bash
 cd stacks/aws-infra
 terraform init
@@ -148,7 +168,7 @@ terraform plan
 terraform apply
 ```
 
-### Step 4: Manage GCP Archive
+### Step 5: Manage GCP Archive
 ```bash
 cd stacks/gcp-infra
 terraform init
