@@ -61,7 +61,7 @@ flowchart TD
 
 ## 📐 Architecture Design Principles
 
-### 1. 🛡️ Blast Radius Isolation (爆炸半径物理隔离)
+### 1. 🛡️ Blast Radius Isolation
 Instead of a monolithic `main.tf` binding all cloud providers into a single state file, this repository strictly separates state boundaries by **Cloud Provider**:
 * Modifying OCI compute firewall will **never** trigger resource locks or risk regressions against AWS or GCP states.
 * An outage in one cloud provider's API endpoint does not block continuous deployment pipelines across the other providers.
