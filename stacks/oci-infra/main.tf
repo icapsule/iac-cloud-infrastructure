@@ -20,7 +20,7 @@ moved {
 # ==============================================================================
 
 module "vm1_gateway" {
-  source              = "../../modules/compute"
+  source              = "git::https://github.com/icapsule/iac-cloud-infrastructure.git//modules/compute?ref=refactor/oci-compute-module"
   compartment_id      = var.compartment_ocid
   availability_domain = var.availability_domain
   display_name        = "vlta-ai-gateway"
@@ -31,7 +31,7 @@ module "vm1_gateway" {
 }
 
 module "vm2_omniroute" {
-  source              = "../../modules/compute"
+  source              = "git::https://github.com/icapsule/iac-cloud-infrastructure.git//modules/compute?ref=refactor/oci-compute-module"
   compartment_id      = var.compartment_ocid
   availability_domain = var.availability_domain
   display_name        = "vlta-omniroute"
