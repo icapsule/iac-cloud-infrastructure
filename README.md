@@ -194,3 +194,8 @@ terraform apply
 *   [ ] **OIDC Dynamic Credentials**: Upgrade the current GitHub-to-HCP authentication (`TF_API_TOKEN`) to a Keyless OpenID Connect (OIDC) architecture, achieving true Zero-Trust dynamic trust without storing static API tokens in GitHub Secrets.
 *   [ ] **Cross-Cloud State Data Sources**: Utilize `terraform_remote_state` to dynamically pass output variables (e.g., OCI IP addresses) directly into the Cloudflare Edge stack.
 *   [ ] **Automated Drift Detection**: Schedule a nightly cron job in GitHub Actions to run `terraform plan` and alert on any out-of-band changes to infrastructure.
+
+
+
+
+

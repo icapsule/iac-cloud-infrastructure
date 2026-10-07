@@ -41,3 +41,6 @@ id_ed25519*
 # OS specific files
 .DS_Store
 Thumbs.db
+
+# Agent configs
+.agents/mcp_config.json

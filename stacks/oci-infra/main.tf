@@ -33,6 +33,7 @@ resource "oci_core_instance" "vm1_gateway" {
     "Role"        = "AI-Gateway-Primary"
     "Environment" = "Production"
     "ManagedBy"   = "Terraform"
+    "CostCenter"  = "Platform-Engineering"
   }
 
   lifecycle {
@@ -57,6 +58,7 @@ resource "oci_core_instance" "vm2_omniroute" {
     "Role"        = "Omniroute-Failover"
     "Environment" = "Production"
     "ManagedBy"   = "Terraform"
+    "CostCenter"  = "Platform-Engineering"
   }
 
   lifecycle {
