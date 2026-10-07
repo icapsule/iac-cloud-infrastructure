@@ -6,9 +6,11 @@ on:
       - main
     paths:
       - 'stacks/oci-infra/**'
+      - 'modules/compute/**'
   pull_request:
     paths:
       - 'stacks/oci-infra/**'
+      - 'modules/compute/**'
 
 env:
   TF_CLOUD_ORGANIZATION: "VLTA"
@@ -21,9 +23,6 @@ jobs:
     permissions:
       pull-requests: write
       contents: read
-    defaults:
-      run:
-        working-directory: ./stacks/oci-infra
 
     steps:
       - name: Checkout Repo
@@ -37,21 +36,21 @@ jobs:
 
       - name: Terraform Format
         id: fmt
-        run: terraform fmt -check
+        run: terraform fmt -check -recursive
         continue-on-error: true
 
       - name: Terraform Init
         id: init
-        run: terraform init
+        run: terraform -chdir=stacks/oci-infra init
 
       - name: Terraform Validate
         id: validate
-        run: terraform validate -no-color
+        run: terraform -chdir=stacks/oci-infra validate -no-color
 
       - name: Terraform Plan
         id: plan
         if: github.event_name == 'pull_request'
-        run: terraform plan -no-color
+        run: terraform -chdir=stacks/oci-infra plan -no-color
 
       # （可选功能）自动把 Plan 的结果写在 Pull Request 的评论里，非常有逼格
       - name: Update Pull Request
@@ -86,4 +85,4 @@ jobs:
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve -input=false
+        run: terraform -chdir=stacks/oci-infra apply -auto-approve -input=false

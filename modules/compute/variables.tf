@@ -11,12 +11,22 @@ variable "availability_domain" {
 variable "display_name" {
   description = "Display name of the instance"
   type        = string
+
+  validation {
+    condition     = length(var.display_name) > 3
+    error_message = "The display_name must be at least 4 characters long."
+  }
 }
 
 variable "shape" {
   description = "Shape of the instance"
   type        = string
   default     = "VM.Standard.E2.1.Micro"
+
+  validation {
+    condition     = startswith(var.shape, "VM.")
+    error_message = "The shape must start with 'VM.'."
+  }
 }
 
 variable "ocpus" {
