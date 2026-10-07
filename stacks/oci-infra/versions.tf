@@ -19,5 +19,7 @@ terraform {
 
 provider "oci" {
   # 本地运行时会自动寻找 ~/.oci/config 的 DEFAULT profile
-  # 在远端（HCP 或 GitHub）运行时，会自动读取 OCI_TENANCY 等环境变量
+  # 在远端（HCP 或 GitHub）运行时，如果没有配置，会自动读取 OCI_TENANCY 等环境变量
+  # 由于 HCP Terraform 的环境变量不支持多行文本，我们通过 Terraform Variable 显式传入 private_key
+  private_key = var.oci_private_key != "" ? var.oci_private_key : null
 }

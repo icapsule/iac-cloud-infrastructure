@@ -39,3 +39,10 @@ variable "availability_domain" {
   type        = string
   default     = "ZXTC:EU-STOCKHOLM-1-AD-1"
 }
+
+variable "oci_private_key" {
+  description = "The raw private key content for OCI API authentication"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
