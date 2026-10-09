@@ -22,6 +22,9 @@ resource "azurerm_key_vault" "vault" {
   soft_delete_retention_days = 7
   purge_protection_enabled   = false
 
+  # 这个配置允许你在本地 Terraform 执行时往里面写初始机密
+  enable_rbac_authorization = true
+
   tags = {
     Environment = var.environment
     ManagedBy   = "Terraform"
@@ -29,9 +32,9 @@ resource "azurerm_key_vault" "vault" {
   }
 }
 
-# Azure Storage Account for Multi-Cloud Blob Storage & Audit Archives
+# Azure Storage Account for Terraform Remote State & Blob Storage
 resource "azurerm_storage_account" "storage" {
-  name                     = "iacmulticloudsa"
+  name                     = replace("${var.prefix}sa", "-", "") # Storage 名字必须全小写无特殊符号
   resource_group_name      = azurerm_resource_group.rg.name
   location                 = azurerm_resource_group.rg.location
   account_tier             = "Standard"
@@ -47,7 +50,7 @@ resource "azurerm_storage_account" "storage" {
 }
 
 resource "azurerm_storage_container" "artifacts" {
-  name                  = "multi-cloud-artifacts"
+  name                  = "tfstate"
   storage_account_name  = azurerm_storage_account.storage.name
   container_access_type = "private"
 }

@@ -31,3 +31,13 @@ jobs:
 
       - name: Terraform Validate
         run: terraform -chdir=stacks/oci-infra validate -no-color
+
+      - name: Security Scan (Trivy IaC)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'        # 只扫配置文件 (IaC)
+          hide-progress: false
+          format: 'table'
+          exit-code: '1'             # 如果扫出高危漏洞，直接让流水线失败 (Fail Fast)
+          ignore-unfixed: true       # 忽略那些官方还没出修复方案的漏洞
+          severity: 'CRITICAL,HIGH'  # 仅拦截致命和高危漏洞
