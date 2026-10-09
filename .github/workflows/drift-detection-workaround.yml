@@ -1,0 +1,55 @@
+name: Terraform Drift Detection (Workaround)
+
+on:
+  schedule:
+    # 每天凌晨 2 点运行一次 (UTC)
+    - cron: '0 2 * * *'
+  workflow_dispatch: # 允许手动触发测试
+
+jobs:
+  drift-detection:
+    name: Check for Infrastructure Drift
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }} # 必须注入静态 Token (妥协方案)
+
+      - name: Terraform Init
+        working-directory: ./stacks/oci-infra
+        run: terraform init
+
+      - name: Terraform Plan (Drift Detection)
+        working-directory: ./stacks/oci-infra
+        id: plan
+        # -detailed-exitcode 意味着: 
+        # 0 = Succeeded, diff is empty (no changes)
+        # 1 = Errored
+        # 2 = Succeeded, there is a diff (drift detected!)
+        run: |
+          set +e
+          terraform plan -detailed-exitcode
+          exitcode=$?
+          echo "exitcode=$exitcode" >> $GITHUB_OUTPUT
+          
+          if [ $exitcode -eq 1 ]; then
+            echo "Terraform plan failed with an error."
+            exit 1
+          elif [ $exitcode -eq 2 ]; then
+            echo "Drift detected! The actual infrastructure differs from the configuration."
+            exit 1 # 让 CI 标红报错
+          else
+            echo "No drift detected."
+            exit 0
+          fi
+
+      - name: Notify on Drift (Optional)
+        if: failure() && steps.plan.outputs.exitcode == '2'
+        run: |
+          echo "⚠️ ACTION REQUIRED: Infrastructure Drift Detected in OCI Stack!"
+          # 这里可以添加 curl 发送给 Slack/Teams 等 Webhook 的逻辑

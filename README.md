@@ -20,7 +20,7 @@ This repository orchestrates a production-grade, multi-cloud foundation designed
 ```mermaid
 flowchart TD
     subgraph Edge["1. Global Edge Routing (Cloudflare)"]
-        CF["Cloudflare Anycast Network & WAF<br/><code>stacks/global-edge</code>"]
+        CF["Cloudflare Anycast Network & WAF<br/><code>stacks/cloudflare-infra</code>"]
     end
 
     subgraph OCI["2. Primary Compute Cluster (Oracle Cloud Infrastructure)"]
@@ -93,7 +93,7 @@ iac-cloud-infrastructure/
 │   └── cloudflare-dns-failover/    # Cloudflare multi-origin DNS routing module
 │
 └── stacks/                         # 🌐 Independent State Boundaries
-    ├── global-edge/                # Cloudflare DNS & Global Anycast Routing
+    ├── cloudflare-infra/           # Cloudflare DNS & Global Anycast Routing
     │   ├── versions.tf
     │   ├── main.tf
     │   ├── variables.tf
@@ -146,7 +146,7 @@ terraform apply
 
 ### Step 2: Manage Global Edge DNS
 ```bash
-cd stacks/global-edge
+cd stacks/cloudflare-infra
 terraform init
 terraform plan
 terraform apply
@@ -193,16 +193,18 @@ terraform apply
 
 This roadmap outlines the systematic evolution of our IaC repository from a functional baseline to an industrial-grade, enterprise-ready infrastructure platform.
 
-### 🚀 Phase 1: Architecture & GitOps Hardening (Execution in Progress)
-*   [ ] **Monorepo Native Execution**: Transition from rigid Git URLs to dynamic local paths using `terraform -chdir` in CI, enabling seamless intra-repo module dependencies.
-*   [ ] **Dependency-Aware CI Pipelines**: Refactor GitHub Actions path filters to ensure changes in shared `modules/` instantly trigger impact analyses (Terraform Plan) on all dependent `stacks/`.
-*   [ ] **Defensive Module Contracts**: Implement rigorous `validation` blocks within `variables.tf` (e.g., regex constraints for resource naming, allowed VM shapes) to enforce "Fail Fast" principles at the code level.
+### 🚀 Phase 1: Architecture & GitOps Hardening (Completed)
+*   [x] **VCS-Driven Monorepo Execution**: Transitioned to Terraform Cloud VCS-driven workflow, enabling native monorepo support (`working_directory`) and secure seamless intra-repo module dependencies.
+*   [x] **Stateless CI Validation**: Refactored GitHub Actions to a stateless "Lint & Validate" pipeline (using `init -backend=false`), removing sensitive API tokens from GitHub while letting TFC handle `plan/apply` securely.
+*   [x] **Defensive Module Contracts**: Implemented rigorous `validation` blocks within `variables.tf` to enforce "Fail Fast" principles at the code level.
 
 ### 🛡️ Phase 2: DevSecOps & FinOps Integration (Next Steps)
-*   [ ] **Infrastructure Drift Detection**: Implement scheduled GitHub Actions (Cron) to run state-diff checks, proactively alerting on manual console changes (Out-of-band drifts).
-*   [ ] **Shift-Left Security Scanning**: Integrate `tfsec` or `Checkov` into the PR pipeline to block insecure configurations (e.g., exposed ports, unencrypted volumes) prior to deployment.
-*   [ ] **Automated FinOps (Infracost)**: Embed `Infracost` into PR bot comments to provide real-time, transparent cloud cost deltas for every infrastructure modification.
-*   [ ] **Dynamic Workspace Routing**: Eliminate hardcoded environments by mapping Git branches (`main`, `dev`) dynamically to distinct HCP Terraform Workspaces.
+*   [x] **Infrastructure Drift Detection**: 
+    *   **Primary (Enterprise-Grade)**: Leverage native Terraform Cloud (TFC Plus) Workspace Health Assessments to automatically detect out-of-band drifts. This maintains our strict "Zero Static Tokens in GitHub" security posture by utilizing TFC's isolated runtime.
+    *   **Workaround (Free Tier)**: Deploy a scheduled GitHub Action cron job to run `terraform plan -detailed-exitcode` to detect drift. This provides an accessible alternative for environments without TFC Plus, though it requires injecting a long-lived `TF_API_TOKEN` into GitHub Secrets.
+*   [x] **Shift-Left Security Scanning**: Integrated `Trivy` (IaC) into the GitHub PR pipeline to block insecure configurations (e.g., exposed ports, unencrypted volumes) prior to deployment, enforcing a Fail-Fast mechanism.
+*   [x] **Automated FinOps (Infracost)**: Embedded `Infracost` via Terraform Cloud Run Tasks to provide real-time, transparent cloud cost estimation (Advisory mode) for every infrastructure modification.
+*   [x] **Dynamic Workspace Routing**: Eliminate hardcoded environments by mapping Git branches (`main`, `dev`) dynamically to distinct HCP Terraform Workspaces (Architected and documented for 1:1 branch-to-workspace mapping strategy).
 
 ---
 
